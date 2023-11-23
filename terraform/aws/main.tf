@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_vpc" "vpc" {
   cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
+  enable_dns_hostnames = "true"
 }
 
 resource "aws_internet_gateway" "igw" {
@@ -12,14 +12,14 @@ resource "aws_internet_gateway" "igw" {
 resource "aws_subnet" "sn1" {
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = "true"
   availability_zone       = "us-east-1a"
 }
 
 resource "aws_subnet" "sn2" {
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = "10.0.3.0/24"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = "true"
   availability_zone       = "us-east-1c"
 }
 
@@ -74,6 +74,7 @@ resource "aws_security_group" "sg" {
 }
 
 resource "aws_efs_file_system" "efs" {
+  #  availability_zone_name = "us-east-1a"
   encrypted = false
 }
 
@@ -112,19 +113,63 @@ resource "aws_efs_mount_target" "mount2" {
   file_system_id  = aws_efs_file_system.efs.id
   subnet_id       = aws_subnet.sn2.id
   security_groups = [aws_security_group.sg.id]
-# }
+}
 
-# resource "aws_launch_template" "lt" {
-#   name = "lt"
-#   # Outras configurações do launch template
-# }
+# DATA # -----------------------------------------------------------------------------------------
 
+data "template_file" "user_data" {
+  template = file("./script/user_data.sh")
+  vars = {
+    efs_id = aws_efs_file_system.efs.id
+  }
+}
+
+# RESOURCE: EC2
 # data "template_file" "user_data" {
-#   template = file("./script/user_data.sh")
-#   vars = {
-#     efs_id = aws_efs_file_system.efs.id
-#   }
+#     template = "${file("./scripts/user_data.sh")}"
 # }
+
+# EC2 INSTANCE 
+
+resource "aws_instance" "instance-1a" {
+    ami                    = "ami-00c39f71452c08778"
+    instance_type          = "t2.micro"
+    subnet_id              = aws_subnet.sn_pub_az1a.id
+    vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
+    user_data              = "${base64encode(data.template_file.user_data.rendered)}"
+    key_name               = "vockey"
+}
+
+resource "aws_instance" "instance-2a" {
+    ami                    = "ami-00c39f71452c08778"
+    instance_type          = "t2.micro"
+    subnet_id              = aws_subnet.sn_pub_az2a.id
+    vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
+    user_data              = "${base64encode(data.template_file.user_data.rendered)}"
+    key_name               = "vockey"
+}
+
+# -----------------------------------------------------------------------------------------
+
+resource "aws_instance" "instance-1b" {
+    ami                    = "ami-00c39f71452c08778"
+    instance_type          = "t2.micro"
+    subnet_id              = aws_subnet.sn_pub_az1b.id
+    vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
+    user_data              = "${base64encode(data.template_file.user_data.rendered)}"
+    key_name               = "vockey"
+}
+
+resource "aws_instance" "instance-2b" {
+    ami                    = "ami-00c39f71452c08778"
+    instance_type          = "t2.micro"
+    subnet_id              = aws_subnet.sn_pub_az2b.id
+    vpc_security_group_ids = [aws_security_group.vpc_sg_pub.id]
+    user_data              = "${base64encode(data.template_file.user_data.rendered)}"
+    key_name               = "vockey"
+}
+
+# LOAD BALANCER 
 
 resource "aws_lb" "lb" {
   name               = "lb"
@@ -141,8 +186,8 @@ resource "aws_lb_target_group" "tg" {
 }
 
 resource "aws_lb_listener" "ec2_lb_listener" {
-  protocol = "HTTP"
-  port     = "80"
+  protocol          = "HTTP"
+  port              = "80"
   load_balancer_arn = aws_lb.lb.arn
 
   default_action {
