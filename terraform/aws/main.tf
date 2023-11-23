@@ -112,19 +112,19 @@ resource "aws_efs_mount_target" "mount2" {
   file_system_id  = aws_efs_file_system.efs.id
   subnet_id       = aws_subnet.sn2.id
   security_groups = [aws_security_group.sg.id]
-}
+# }
 
-resource "aws_launch_template" "lt" {
-  name = "lt"
-  # Outras configurações do launch template
-}
+# resource "aws_launch_template" "lt" {
+#   name = "lt"
+#   # Outras configurações do launch template
+# }
 
-data "template_file" "user_data" {
-  template = file("./script/user_data.sh")
-  vars = {
-    efs_id = aws_efs_file_system.efs.id
-  }
-}
+# data "template_file" "user_data" {
+#   template = file("./script/user_data.sh")
+#   vars = {
+#     efs_id = aws_efs_file_system.efs.id
+#   }
+# }
 
 resource "aws_lb" "lb" {
   name               = "lb"
