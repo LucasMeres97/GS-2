@@ -141,4 +141,29 @@ resource "aws_lb_target_group" "tg" {
 }
 
 resource "aws_lb_listener" "ec2_lb_listener" {
-  protocol          = "
+  protocol = "HTTP"
+  port     = "80"
+  load_balancer_arn = aws_lb.lb.arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
+}
+
+resource "aws_autoscaling_group" "asg" {
+  name                = "asg"
+  desired_capacity    = "4"
+  min_size            = "2"
+  max_size            = "8"
+  vpc_zone_identifier = [aws_subnet.sn1.id, aws_subnet.sn2.id]
+  target_group_arns   = [aws_lb_target_group.tg.arn]
+  launch_template {
+    id      = aws_launch_template.lt.id
+    version = "$Latest"
+  }
+  depends_on = [
+    aws_efs_mount_target.mount1,
+    aws_efs_mount_target.mount2
+  ]
+}
