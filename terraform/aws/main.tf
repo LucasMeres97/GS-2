@@ -124,9 +124,9 @@ data "template_file" "user_data" {
 
 # EC2 INSTANCE 
 
-# RESOURCE: EC2
-data "template_file" "user_data" {
-    template = "${file("./scripts/user_data.sh")}"
+# # RESOURCE: EC2
+# data "template_file" "user_data" {
+#     template = "${file("./scripts/user_data.sh")}"
 }
 
 resource "aws_instance" "instance-1a" {
